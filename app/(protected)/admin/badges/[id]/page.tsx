@@ -73,6 +73,9 @@ export default async function AdminBadgeGroupPage({
               defaultValue={badge.description ?? ""}
             />
 
+            <label htmlFor="xp">Experience points</label>
+            <input id="xp" name="xp" type="number" min={0} defaultValue={badge.xp} />
+
             <label htmlFor="image">Badge image</label>
             <input id="image" name="image" type="file" accept="image/png,image/jpeg,image/webp" />
 

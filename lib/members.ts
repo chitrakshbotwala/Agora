@@ -38,7 +38,26 @@ export const profileSchema = z.object({
 export const badgeSchema = z.object({
   name: z.string().trim().min(2).max(80),
   description: z.string().trim().max(240).optional(),
+  xp: z.coerce.number().int().min(0).max(1_000_000).default(0),
 });
+
+export type Medal = "gold" | "silver" | "bronze";
+
+export function memberTotalXp(memberBadges: { badge: { xp: number } }[]) {
+  return memberBadges.reduce((total, memberBadge) => total + memberBadge.badge.xp, 0);
+}
+
+// Global gold/silver/bronze for the top 3 members by XP (XP > 0 only), ties broken by name.
+export function assignMedals(
+  members: { id: string; name: string; xp: number }[],
+): Map<string, Medal> {
+  const medals: Medal[] = ["gold", "silver", "bronze"];
+  const ranked = members
+    .filter((member) => member.xp > 0)
+    .sort((a, b) => b.xp - a.xp || a.name.localeCompare(b.name));
+
+  return new Map(ranked.slice(0, 3).map((member, index) => [member.id, medals[index]]));
+}
 
 export function parseSkills(value: string | undefined) {
   return (value ?? "")

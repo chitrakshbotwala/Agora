@@ -47,6 +47,7 @@ export async function createBadge(formData: FormData) {
   const parsed = badgeSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
+    xp: formData.get("xp"),
   });
 
   if (!parsed.success) {
@@ -71,10 +72,12 @@ export async function createBadge(formData: FormData) {
     where: { name: parsed.data.name },
     update: {
       description: parsed.data.description || null,
+      xp: parsed.data.xp,
     },
     create: {
       name: parsed.data.name,
       description: parsed.data.description || null,
+      xp: parsed.data.xp,
     },
   });
 
@@ -139,6 +142,7 @@ export async function updateBadge(formData: FormData) {
   const parsed = badgeSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
+    xp: formData.get("xp"),
   });
 
   if (!parsed.success) {
@@ -167,6 +171,7 @@ export async function updateBadge(formData: FormData) {
     data: {
       name: parsed.data.name,
       description: parsed.data.description || null,
+      xp: parsed.data.xp,
       imageUrl,
     },
   });

@@ -1180,6 +1180,21 @@ img {
   font-size: 1.35rem;
 }
 
+.member-avatar.medal-gold {
+  border-color: #d4af37;
+  box-shadow: 0 0 0 4px #ffd700;
+}
+
+.member-avatar.medal-silver {
+  border-color: #9ca3af;
+  box-shadow: 0 0 0 4px #c0c0c0;
+}
+
+.member-avatar.medal-bronze {
+  border-color: #a05a2c;
+  box-shadow: 0 0 0 4px #cd7f32;
+}
+
 .member-profile-photo {
   width: 100%;
   aspect-ratio: 1;

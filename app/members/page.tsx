@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { UserStatus } from "@prisma/client";
-import { memberDisplayName, memberInitials } from "../../lib/members";
+import { assignMedals, memberDisplayName, memberInitials, memberTotalXp } from "../../lib/members";
 import { prisma } from "../../lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -12,14 +12,32 @@ export default async function MembersPage() {
     orderBy: [{ profile: { displayName: "asc" } }, { name: "asc" }],
     include: {
       profile: true,
-      memberBadges: { include: { badge: true }, orderBy: { awardedAt: "desc" }, take: 3 },
+      memberBadges: { include: { badge: true }, orderBy: { awardedAt: "desc" } },
     },
   });
+
+  const xpByMember = new Map(
+    members.map((member) => [member.id, memberTotalXp(member.memberBadges)]),
+  );
+  const medals = assignMedals(
+    members.map((member) => ({
+      id: member.id,
+      name: memberDisplayName(member),
+      xp: xpByMember.get(member.id) ?? 0,
+    })),
+  );
 
   const NO_BATCH = "Batch details pending";
   const groups = new Map<string, typeof members>();
 
-  for (const member of members) {
+  // Sort by XP desc (then name) before grouping, so each batch group is XP-ranked.
+  const ranked = [...members].sort(
+    (a, b) =>
+      (xpByMember.get(b.id) ?? 0) - (xpByMember.get(a.id) ?? 0) ||
+      memberDisplayName(a).localeCompare(memberDisplayName(b)),
+  );
+
+  for (const member of ranked) {
     const batch = member.profile?.batch?.trim() || NO_BATCH;
     (groups.get(batch) ?? groups.set(batch, []).get(batch)!).push(member);
   }
@@ -44,14 +62,16 @@ export default async function MembersPage() {
               <div className="member-grid">
                 {batchMembers.map((member) => {
                   const name = memberDisplayName(member);
+                  const medal = medals.get(member.id);
+                  const avatarClass = medal ? `member-avatar medal-${medal}` : "member-avatar";
 
                   return (
                     <article className="member-card" key={member.id}>
                       <a className="member-card-profile" href={`/members/${member.id}`}>
                         {member.profile?.photoUrl ? (
-                          <img className="member-avatar" src={member.profile.photoUrl} alt="" />
+                          <img className={avatarClass} src={member.profile.photoUrl} alt="" />
                         ) : (
-                          <span className="member-avatar member-avatar-fallback">
+                          <span className={`${avatarClass} member-avatar-fallback`}>
                             {memberInitials(name)}
                           </span>
                         )}
@@ -67,7 +87,7 @@ export default async function MembersPage() {
                       </a>
                       {member.memberBadges.length > 0 ? (
                         <span className="member-card-badges" aria-label="Badges">
-                          {member.memberBadges.map((memberBadge) =>
+                          {member.memberBadges.slice(0, 3).map((memberBadge) =>
                             memberBadge.badge.imageUrl ? (
                               <a
                                 aria-label={memberBadge.badge.name}

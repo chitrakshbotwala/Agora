@@ -33,6 +33,9 @@ export default function CreateBadgeModal({
             rows={4}
           />
 
+          <label htmlFor="badge-xp">Experience points</label>
+          <input id="badge-xp" name="xp" type="number" min={0} defaultValue={0} />
+
           <label htmlFor="badge-image">Badge photo*</label>
           <div className="badge-upload-row">
             <span className="badge-upload-icon">▣</span>
