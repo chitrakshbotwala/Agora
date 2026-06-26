@@ -272,7 +272,7 @@ async function main() {
       testCases: [
         { input: "5\n1 2 3 4 5\n3 4 5 1 2\n", expectedOutput: "3\n", isSample: true, order: 1 },
         { input: "3\n2 3 4\n3 4 3\n", expectedOutput: "-1\n", isSample: true, order: 2 },
-        { input: "4\n5 1 2 3\n4 4 1 2\n", expectedOutput: "0\n", isSample: false, order: 3 },
+        { input: "4\n5 1 2 3\n4 4 1 2\n", expectedOutput: "2\n", isSample: false, order: 3 },
       ],
     },
     {
@@ -505,6 +505,21 @@ async function main() {
       ],
     },
   ];
+
+  // Additional hidden edge-case tests, shared with scripts/sync-problem-tests.mjs.
+  const extraTests = require("./extra-tests.json");
+  for (const problem of problems) {
+    const extra = extraTests[problem.slug] ?? [];
+    const startOrder = problem.testCases.length;
+    extra.forEach((test, i) => {
+      problem.testCases.push({
+        input: test.input,
+        expectedOutput: test.expectedOutput,
+        isSample: false,
+        order: startOrder + i + 1,
+      });
+    });
+  }
 
   for (const problem of problems) {
     const { testCases, ...problemData } = problem;
