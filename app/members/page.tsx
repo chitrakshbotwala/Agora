@@ -89,7 +89,7 @@ export default async function MembersPage() {
                       </a>
                       {member.memberBadges.length > 0 ? (
                         <span className="member-card-badges" aria-label="Badges">
-                          {member.memberBadges.slice(0, 3).map((memberBadge) =>
+                          {member.memberBadges.map((memberBadge) =>
                             memberBadge.badge.imageUrl ? (
                               <a
                                 aria-label={memberBadge.badge.name}
