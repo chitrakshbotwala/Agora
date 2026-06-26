@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   MAX_PROFILE_PHOTO_BYTES,
+  batchYears,
   memberDisplayName,
   memberInitials,
   parseSkills,
@@ -47,5 +48,13 @@ describe("member helpers", () => {
         new File(["x".repeat(MAX_PROFILE_PHOTO_BYTES + 1)], "photo.png", { type: "image/png" }),
       ),
     ).toContain("under 2MB");
+  });
+
+  it("accepts a 4-digit batch year and rejects free-form text", () => {
+    const base = { githubUrl: "", linkedinUrl: "", resumeUrl: "" };
+    expect(profileSchema.safeParse({ ...base, batch: "2028" }).success).toBe(true);
+    expect(profileSchema.safeParse({ ...base, batch: "" }).success).toBe(true);
+    expect(profileSchema.safeParse({ ...base, batch: "2024-28" }).success).toBe(false);
+    expect(batchYears()).toContain(String(new Date().getFullYear()));
   });
 });

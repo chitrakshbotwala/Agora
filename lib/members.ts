@@ -3,6 +3,12 @@ import { z } from "zod";
 export const MAX_PROFILE_PHOTO_BYTES = 2 * 1024 * 1024;
 export const PROFILE_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
 
+// Graduation years offered in batch dropdowns, newest first. Range widens automatically.
+export function batchYears() {
+  const now = new Date().getFullYear();
+  return Array.from({ length: 17 }, (_, i) => String(now + 6 - i));
+}
+
 const optionalUrl = z
   .string()
   .trim()
@@ -14,7 +20,12 @@ const optionalUrl = z
 export const profileSchema = z.object({
   displayName: z.string().trim().max(80).optional(),
   college: z.string().trim().max(120).optional(),
-  batch: z.string().trim().max(40).optional(),
+  batch: z
+    .string()
+    .trim()
+    .regex(/^\d{4}$/, "Select a valid graduation year")
+    .or(z.literal(""))
+    .optional(),
   branch: z.string().trim().max(80).optional(),
   bio: z.string().trim().max(1200).optional(),
   skills: z.string().trim().max(500).optional(),

@@ -3,7 +3,7 @@
 import { Role, UserStatus } from "@prisma/client";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "../../../../auth";
-import { memberDisplayName, memberInitials } from "../../../../lib/members";
+import { batchYears, memberDisplayName, memberInitials } from "../../../../lib/members";
 import { prisma } from "../../../../lib/prisma";
 import { updateMemberProfile } from "./actions";
 
@@ -43,6 +43,11 @@ export default async function EditMemberProfilePage({
   }
 
   const name = memberDisplayName(member);
+  const currentBatch = member.profile?.batch ?? "";
+  const batchOptions =
+    currentBatch && !batchYears().includes(currentBatch)
+      ? [currentBatch, ...batchYears()]
+      : batchYears();
 
   return (
     <main className="app-shell workspace-shell">
@@ -77,12 +82,14 @@ export default async function EditMemberProfilePage({
           <input id="college" name="college" defaultValue={member.profile?.college ?? ""} />
 
           <label htmlFor="batch">Batch</label>
-          <input
-            id="batch"
-            name="batch"
-            defaultValue={member.profile?.batch ?? ""}
-            placeholder="2026"
-          />
+          <select id="batch" name="batch" defaultValue={currentBatch}>
+            <option value="">Not set</option>
+            {batchOptions.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
 
           <label htmlFor="branch">Branch</label>
           <input id="branch" name="branch" defaultValue={member.profile?.branch ?? ""} />
