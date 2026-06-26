@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { cpp } from "@codemirror/lang-cpp";
 import { python } from "@codemirror/lang-python";
@@ -49,6 +49,8 @@ function languageExtensions(language: string) {
   return language === "cpp" ? [cpp()] : [python()];
 }
 
+const draftKey = (slug: string, language: string) => `shardup:draft:${slug}:${language}`;
+
 export function SubmissionPanel({
   languageOptions,
   problemSlug,
@@ -65,12 +67,19 @@ export function SubmissionPanel({
   const [error, setError] = useState<string | null>(null);
   const [runningLanguage, setRunningLanguage] = useState("python");
 
+  // Restore the saved draft for this problem + language (localStorage survives refresh).
+  useEffect(() => {
+    const saved = localStorage.getItem(draftKey(problemSlug, language));
+    setCode(saved ?? starterCode[language] ?? "");
+  }, [problemSlug, language]);
+
+  function handleCodeChange(value: string) {
+    setCode(value);
+    localStorage.setItem(draftKey(problemSlug, language), value);
+  }
+
   function handleLanguageChange(nextLanguage: string) {
     setLanguage(nextLanguage);
-
-    if (!code.trim() || code === starterCode[language]) {
-      setCode(starterCode[nextLanguage] ?? "");
-    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -135,7 +144,7 @@ export function SubmissionPanel({
             editable={!isRunning}
             extensions={languageExtensions(language)}
             height="360px"
-            onChange={(value) => setCode(value)}
+            onChange={(value) => handleCodeChange(value)}
             theme={oneDark}
             value={code}
           />
