@@ -48,22 +48,47 @@ write_files:
   - path: /opt/shardup-judge/patch-piston-request-body-limit.js
     permissions: "0644"
     content: |
-      # Upstream Piston exposes file/output/time limits through environment
-      # variables, but its Express body parsers still use body-parser defaults.
-      # The default request limit rejects large stdin payloads before Piston can
-      # run the program, so patch the API parser limit for judge stress tests.
-      const fs = require("node:fs");
-      const file = "/piston_api/src/index.js";
-      let source = fs.readFileSync(file, "utf8");
-      source = source.replace(
-        "app.use(body_parser.urlencoded({ extended: true }));",
-        "app.use(body_parser.urlencoded({ extended: true, limit: process.env.PISTON_REQUEST_BODY_LIMIT || '8mb' }));",
-      );
-      source = source.replace(
-        "app.use(body_parser.json());",
-        "app.use(body_parser.json({ limit: process.env.PISTON_REQUEST_BODY_LIMIT || '8mb' }));",
-      );
-      fs.writeFileSync(file, source);
+      const fs = require("fs");
+
+      function patchFile(file, replacements) {
+        let source = fs.readFileSync(file, "utf8");
+        for (const [before, after] of replacements) {
+          if (source.includes(after)) {
+            continue;
+          }
+          if (!source.includes(before)) {
+            throw new Error(`Could not find patch target in ${file}`);
+          }
+          source = source.replace(before, after);
+        }
+        fs.writeFileSync(file, source);
+      }
+
+      // Upstream Piston exposes file/output/time limits through environment
+      // variables, but its Express body parsers still use body-parser defaults.
+      // Patch the API parser limit so large judge stdin payloads reach Piston.
+      patchFile("/piston_api/src/index.js", [
+        [
+          "app.use(body_parser.urlencoded({ extended: true }));",
+          "app.use(body_parser.urlencoded({ extended: true, limit: process.env.PISTON_REQUEST_BODY_LIMIT || \"8mb\" }));",
+        ],
+        [
+          "app.use(body_parser.json());",
+          "app.use(body_parser.json({ limit: process.env.PISTON_REQUEST_BODY_LIMIT || \"8mb\" }));",
+        ],
+      ]);
+
+      // Piston writes stdin and then immediately destroys the stream, which can
+      // discard buffered data for large stress-test inputs. Let Node flush and
+      // close stdin normally instead.
+      patchFile("/piston_api/src/job.js", [
+        [
+          `            proc.stdin.write(this.stdin);
+            proc.stdin.end();
+            proc.stdin.destroy();`,
+          "            proc.stdin.end(this.stdin);",
+        ],
+      ]);
 
   - path: /etc/caddy/Caddyfile
     permissions: "0644"
