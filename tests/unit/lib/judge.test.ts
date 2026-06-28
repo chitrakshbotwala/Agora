@@ -155,6 +155,23 @@ describe("executeWithPiston", () => {
     expect(result.signal).toBe("SIGKILL");
   });
 
+  it("includes Piston HTTP failure details in thrown errors", async () => {
+    process.env.JUDGE_BASE_URL = "https://judge.example.test/api/v2";
+
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => {
+      return new Response("payload too large", { status: 413 });
+    });
+
+    await expect(
+      executeWithPiston({
+        code: "",
+        language: "python",
+        stdin: "",
+        timeLimitMs: 2000,
+      }),
+    ).rejects.toThrow("Judge service returned HTTP 413: payload too large");
+  });
+
   it("marks Piston run timeouts as timed out results", async () => {
     process.env.JUDGE_BASE_URL = "https://judge.example.test/api/v2";
 

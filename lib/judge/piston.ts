@@ -57,7 +57,10 @@ export const executeWithPiston: CodeExecutor = async ({ code, language, stdin, t
     });
 
     if (!response.ok) {
-      throw new Error(`Piston request failed: ${response.status}`);
+      const details = (await response.text()).replace(/\s+/g, " ").trim().slice(0, 200);
+      throw new Error(
+        `Judge service returned HTTP ${response.status}${details ? `: ${details}` : ""}`,
+      );
     }
 
     const data = (await response.json()) as PistonResponse;

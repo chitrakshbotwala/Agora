@@ -8,6 +8,18 @@ type RunResult =
   | { ok: true; verdict: string; passedCount: number; totalCount: number; runtimeMs: number | null }
   | { ok: false; message: string };
 
+function judgeFailureMessage(error: unknown) {
+  if (!(error instanceof Error)) {
+    return "Could not run the judge. Check the judge service logs.";
+  }
+
+  if (error.message.includes("JUDGE_BASE_URL")) {
+    return "Could not run the judge. JUDGE_BASE_URL is not configured.";
+  }
+
+  return `Could not run the judge. ${error.message}`;
+}
+
 export async function runReferenceSolution(slug: string): Promise<RunResult> {
   await requireAdmin();
 
@@ -39,7 +51,7 @@ export async function runReferenceSolution(slug: string): Promise<RunResult> {
       timeLimitMs: problem.timeLimitMs,
     });
     return { ok: true, ...result };
-  } catch {
-    return { ok: false, message: "Could not run the judge. Is JUDGE_BASE_URL configured?" };
+  } catch (error) {
+    return { ok: false, message: judgeFailureMessage(error) };
   }
 }
