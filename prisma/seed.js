@@ -3,6 +3,7 @@ const path = require("node:path");
 const { PrismaClient } = require("@prisma/client");
 const { buildStressTests } = require("./hidden-stress-tests");
 const { randomUUID } = require("node:crypto");
+const { additionalPracticeProblems, practiceOrderSlugs } = require("./practice-problem-batch");
 
 const prisma = new PrismaClient();
 
@@ -540,6 +541,13 @@ async function main() {
       ],
     },
   ];
+
+  problems.push(...additionalPracticeProblems);
+
+  const practiceOrderBySlug = new Map(practiceOrderSlugs.map((slug, index) => [slug, index]));
+  for (const problem of problems) {
+    problem.practiceOrder = practiceOrderBySlug.get(problem.slug) ?? 100000;
+  }
 
   // Hidden edge-case and stress tests, shared with scripts/sync-problem-tests.mjs.
   const hiddenTests = require("./hidden-tests.json");
